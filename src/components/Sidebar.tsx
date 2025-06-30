@@ -1,20 +1,13 @@
 import React, { useState } from "react";
-import {
-  Drawer,
-  IconButton,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  useTheme,
-  useMediaQuery,
-} from "@mui/material";
+import { Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
   Settings as SettingsIcon,
   BarChart as BarChartIcon,
   Menu as MenuIcon,
+  QrCode as QrCodeIcon,
 } from "@mui/icons-material";
+
 import { NavLink } from "react-router-dom";
 
 interface SidebarProps {
@@ -23,7 +16,6 @@ interface SidebarProps {
 
 export default function Sidebar({ isMobile }: SidebarProps) {
   const [open, setOpen] = useState(false);
-  const theme = useTheme();
 
   const toggleDrawer = () => {
     setOpen(!open);
@@ -33,6 +25,12 @@ export default function Sidebar({ isMobile }: SidebarProps) {
 
   const drawer = (
     <List>
+      <ListItemButton component={NavLink} to="/scanner" onClick={() => isMobile && setOpen(false)}>
+        <ListItemIcon>
+          <QrCodeIcon />
+        </ListItemIcon>
+        <ListItemText primary="Scanner" />
+      </ListItemButton>
       <ListItemButton component={NavLink} to="/" onClick={() => isMobile && setOpen(false)}>
         <ListItemIcon>
           <DashboardIcon />
@@ -72,9 +70,13 @@ export default function Sidebar({ isMobile }: SidebarProps) {
         variant={isMobile ? "temporary" : "permanent"}
         open={isMobile ? open : true}
         onClose={toggleDrawer}
+        ModalProps={{
+          keepMounted: true, // migliora performance su mobile
+        }}
         sx={{
-          width: drawerWidth,
+          width: isMobile ? undefined : drawerWidth,
           flexShrink: 0,
+          zIndex: (theme) => (isMobile ? theme.zIndex.drawer : theme.zIndex.appBar - 1),
           "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
