@@ -14,8 +14,7 @@ export default function Topbar() {
       }}
     >
       <Toolbar sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-        {/* Logo a sinistra */}
-        <Box sx={{ display: "flex", alignItems: "center", width: 210 }}>
+        <Box sx={{ display: "flex", alignItems: "center", width: 210, ml: "40px" }}>
           <img src="/ObjectID_darkmode.svg" alt="ObjectID Logo" style={{ height: 32 }} />
         </Box>
 
