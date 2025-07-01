@@ -6,12 +6,12 @@ import { graphqlUrl } from "../constants/config";
 import { getFullnodeUrl, IotaClient } from "@iota/iota-sdk/client";
 
 export function ExplorerURL(network: string, objectID: string): string {
-  const base = network === "testnet" ? "https://explorer.iota.org/?network=testnet" : "https://explorer.iota.org";
-  return `${base}/object/${objectID}`;
+  if (network == "testnet") return `https://explorer.iota.org/object/${objectID}?network=testnet`;
+  else return `https://explorer.iota.org/object/${objectID}?network=testnet`;
 }
 
 export default function ViewObject() {
-  const { objectID, network, client, setClient } = useAppContext();
+  const { objectID, network, client } = useAppContext();
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const [object, setObject] = useState<any>(null);
   const [validation, setValidation] = useState<any>(null);
@@ -25,20 +25,7 @@ export default function ViewObject() {
       setStatus("error");
       return;
     }
-
-    const initializeClient = async () => {
-      try {
-        const localClient = new IotaClient({ url: getFullnodeUrl(network) });
-        setClient(localClient);
-        setStatus("ok");
-      } catch (e: any) {
-        setError(e.message || "Error creating IOTA client");
-        setStatus("error");
-      }
-    };
-
-    initializeClient();
-  }, [network, objectID, setClient]);
+  }, [network, objectID]);
 
   if (!objectID || !network) {
     return (

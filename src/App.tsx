@@ -31,7 +31,7 @@ function App() {
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<ViewObject />} />
-          <Route path="viewObject" element={<ViewObject />} />
+          <Route path="view-object" element={<ViewObject />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
           <Route path="scanner" element={<Scanner />} />

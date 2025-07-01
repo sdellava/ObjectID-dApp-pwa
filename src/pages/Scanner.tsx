@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { Box, Typography, Button, Alert } from "@mui/material";
+import { Box, Alert } from "@mui/material";
 import { Html5Qrcode } from "html5-qrcode";
 import { useAppContext } from "../context/AppContext";
 import { useMediaQuery, useTheme } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { getFullnodeUrl, IotaClient } from "@iota/iota-sdk/client";
 
 export default function Scanner() {
   const qrRegionId = "qr-reader";
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
-  const [scannedOid, setScannedOid] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { setObjectID, setNetwork } = useAppContext();
+  const { setObjectID, setNetwork, setClient } = useAppContext();
+  const navigate = useNavigate();
 
   const theme = useTheme();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up("md"));
@@ -38,8 +40,12 @@ export default function Scanner() {
     if (valid) {
       const { oid, n } = valid;
       setNetwork(n === "testnet" ? "testnet" : "mainnet");
-      setScannedOid(oid);
       setObjectID(oid);
+
+      const localClient = new IotaClient({ url: getFullnodeUrl(n === "testnet" ? "testnet" : "mainnet") });
+      setClient(localClient);
+
+      navigate("/view-object");
       return true;
     } else {
       setError("Invalid ObjectID QR code.");
@@ -59,7 +65,7 @@ export default function Scanner() {
         html5QrCode
           .start(
             cameraId,
-            { fps: 10, qrbox: qrboxSize },
+            { fps: 10, qrbox: { width: qrboxSize, height: qrboxSize } },
             (decodedText) => {
               if (processDecodedText(decodedText)) {
                 html5QrCode.stop();
@@ -69,7 +75,7 @@ export default function Scanner() {
             () => {}
           )
           .then(() => {
-            isRunning = true; // ✅ scanner partito con successo
+            isRunning = true;
           })
           .catch((err) => {
             console.error("QR init error", err);
@@ -86,60 +92,25 @@ export default function Scanner() {
     };
   }, []);
 
-  const handleRescan = () => {
-    setScannedOid(null);
-    setError(null);
-    if (html5QrCodeRef.current) {
-      Html5Qrcode.getCameras().then((devices) => {
-        if (devices && devices.length) {
-          html5QrCodeRef.current?.start(
-            devices[0].id,
-            { fps: 10, qrbox: qrboxSize },
-            (decodedText) => {
-              if (processDecodedText(decodedText)) {
-                html5QrCodeRef.current?.stop();
-              }
-            },
-            () => {}
-          );
-        }
-      });
-    }
-  };
-
   return (
     <Box sx={{ p: 2, display: "flex", flexDirection: "column", alignItems: "center" }}>
-      {!scannedOid && (
-        <Box
-          sx={{
-            border: "2px solid #ccc",
-            borderRadius: "8px",
-            padding: 1,
-            width: boxSize + 20,
-            display: "flex",
-            justifyContent: "center",
-          }}
-        >
-          <div id={qrRegionId} style={{ width: boxSize }} />
-        </Box>
-      )}
+      <Box
+        sx={{
+          border: "2px solid #ccc",
+          borderRadius: "8px",
+          padding: 1,
+          width: boxSize + 20,
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <div id={qrRegionId} style={{ width: boxSize }} />
+      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mt: 2, width: 320 }}>
           {error}
         </Alert>
-      )}
-
-      {scannedOid && (
-        <Box sx={{ mt: 3, textAlign: "center" }}>
-          <Typography variant="body1">Scanned ObjectID:</Typography>
-          <Typography variant="subtitle1" color="primary">
-            {scannedOid}
-          </Typography>
-          <Button variant="outlined" sx={{ mt: 2 }} onClick={handleRescan}>
-            Scan Again
-          </Button>
-        </Box>
       )}
     </Box>
   );
