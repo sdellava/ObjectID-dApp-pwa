@@ -35,7 +35,6 @@ export default function Scanner() {
   };
 
   const processDecodedText = (decodedText: string) => {
-    console.log(decodedText);
     const valid = validateAndParseObjectID(decodedText);
     if (valid) {
       const { oid, n } = valid;

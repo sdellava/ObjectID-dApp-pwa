@@ -222,13 +222,7 @@ export default function ViewObject() {
 
         if (objectIdType && typeof objectIdType === "string") {
           const eventType = objectIdType.replace(/OIDObject$/, "OIDEvent");
-
-          console.log("eventType", eventType);
-
           const relatedEvents = await searchObjectsByTypeAndOwnerAddress(eventType, objectID, graphqlUrl(network));
-
-          console.log("relatedEvents", relatedEvents);
-
           const parsedEvents = relatedEvents.map((edge: any) => {
             const rawFields = edge.node.asMoveObject?.contents?.data?.Struct || [];
 
