@@ -33,14 +33,31 @@ function formatLabel(key: string): string {
 }
 
 function renderValue(key: string, val: any, network: string): React.ReactNode {
-  if (key === "id" && typeof val === "string") {
-    const url = ExplorerURL(network, val);
-    return (
-      <Link href={url} target="_blank">
-        {val}
-      </Link>
-    );
+  if (key === "id") {
+    let idValue: string | null = null;
+
+    if (typeof val === "string") {
+      idValue = val;
+    } else if (typeof val === "object" && val !== null && "id" in val) {
+      idValue = val.id;
+    }
+
+    if (idValue) {
+      const url = ExplorerURL(network, idValue);
+      return (
+        <Link href={url} target="_blank" rel="noopener">
+          {idValue}
+        </Link>
+      );
+    } else {
+      return (
+        <Typography variant="body2" color="text.secondary">
+          N/A
+        </Typography>
+      );
+    }
   }
+
   if (key === "geo_location" && typeof val === "string") {
     return (
       <Link href={`https://maps.google.com/?q=${encodeURIComponent(val)}`} target="_blank">
@@ -92,16 +109,32 @@ function MetadataTable({ title, data, network }: { title: string; data: Record<s
   return (
     <Box sx={{ mt: 3 }}>
       <Typography variant="subtitle1" gutterBottom>
-        {title}
+        <strong>{title}</strong>
       </Typography>
       <Table size="small">
         <TableBody>
-          {sortedKeys.map((key) => (
-            <TableRow key={key}>
-              <TableCell sx={{ fontWeight: "bold", width: "40%" }}>{formatLabel(key)}</TableCell>
-              <TableCell>{renderValue(key, data[key], network)}</TableCell>
-            </TableRow>
-          ))}
+          {sortedKeys.flatMap((key, index) => {
+            const rows = [];
+
+            if (index === 1) {
+              // Inserisci "Network" come seconda riga
+              rows.push(
+                <TableRow key="network">
+                  <TableCell sx={{ fontWeight: "bold", width: "40%" }}>Network</TableCell>
+                  <TableCell>{network}</TableCell>
+                </TableRow>
+              );
+            }
+
+            rows.push(
+              <TableRow key={key}>
+                <TableCell sx={{ fontWeight: "bold", width: "40%" }}>{formatLabel(key)}</TableCell>
+                <TableCell>{renderValue(key, data[key], network)}</TableCell>
+              </TableRow>
+            );
+
+            return rows;
+          })}
         </TableBody>
       </Table>
     </Box>
@@ -124,8 +157,31 @@ export default function ViewObject() {
     (async () => {
       try {
         const result = (await getObject(client, objectID)) as any;
-        const extracted = result?.content?.fields || {};
-        setFields(extracted);
+        const rawFields = result?.content?.fields || {};
+        const fields = { ...rawFields };
+
+        // Unisci immutable_metadata e mutable_metadata dentro fields
+        ["immutable_metadata", "mutable_metadata"].forEach((metaKey) => {
+          try {
+            const metaRaw = fields[metaKey];
+            if (metaRaw && typeof metaRaw === "string") {
+              const meta = JSON.parse(metaRaw);
+              if (typeof meta === "object" && meta !== null) {
+                for (const [k, v] of Object.entries(meta)) {
+                  if (!(k in fields)) {
+                    fields[k] = v;
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.warn(`Error parsing ${metaKey}:`, e);
+          }
+          delete fields[metaKey];
+        });
+
+        setFields(fields);
+
         setStatus("ok");
       } catch (e) {
         console.error("Error loading object:", e);
@@ -157,20 +213,7 @@ export default function ViewObject() {
   if (network && objectID)
     return (
       <Box sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          ObjectID: {objectID}
-        </Typography>
-        <Typography variant="body2" sx={{ mb: 2 }}>
-          Network: {network}
-        </Typography>
-
-        <Box sx={{ mb: 2 }}>
-          <Link href={ExplorerURL(network, objectID)} target="_blank" rel="noopener">
-            View on Explorer
-          </Link>
-        </Box>
-
-        <MetadataTable title="Object Fields" data={fields} network={network} />
+        <MetadataTable title="Object data:" data={fields} network={network} />
       </Box>
     );
   else return <></>;
