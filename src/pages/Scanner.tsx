@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Box, Typography, Button, Alert } from "@mui/material";
 import { Html5Qrcode } from "html5-qrcode";
 import { useAppContext } from "../context/AppContext";
+import { useMediaQuery, useTheme } from "@mui/material";
 
 export default function Scanner() {
   const qrRegionId = "qr-reader";
@@ -10,6 +11,12 @@ export default function Scanner() {
   const [error, setError] = useState<string | null>(null);
 
   const { setObjectID, setNetwork } = useAppContext();
+
+  const theme = useTheme();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("md"));
+
+  const boxSize = isLargeScreen ? 600 : 300;
+  const qrboxSize = isLargeScreen ? 500 : 250;
 
   const validateAndParseObjectID = (data: string): { oid: string; n: string | null } | null => {
     try {
@@ -87,7 +94,7 @@ export default function Scanner() {
         if (devices && devices.length) {
           html5QrCodeRef.current?.start(
             devices[0].id,
-            { fps: 10, qrbox: { width: 250, height: 250 } },
+            { fps: 10, qrbox: { width: qrboxSize, height: qrboxSize } },
             (decodedText) => {
               if (processDecodedText(decodedText)) {
                 html5QrCodeRef.current?.stop();
@@ -108,12 +115,12 @@ export default function Scanner() {
             border: "2px solid #ccc",
             borderRadius: "8px",
             padding: 1,
-            width: 320,
+            width: boxSize + 20,
             display: "flex",
             justifyContent: "center",
           }}
         >
-          <div id={qrRegionId} style={{ width: 300 }} />
+          <div id={qrRegionId} style={{ width: boxSize }} />
         </Box>
       )}
 

@@ -9,6 +9,8 @@ interface AppContextType {
   setObjectID: (id: string | null) => void;
   network: string | null;
   setNetwork: (id: string | null) => void;
+  credits: number;
+  setCredits: (data: number) => void;
 }
 
 // 👉 Contesto iniziale con valori default (placeholder)
@@ -19,6 +21,8 @@ const AppContext = createContext<AppContextType>({
   setObjectID: () => {},
   network: null,
   setNetwork: () => {},
+  credits: 0,
+  setCredits: () => {},
 });
 
 // 👉 Provider: wrappa l'intera app
@@ -26,8 +30,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [objectData, setObjectData] = useState<ObjectData | null>(null);
   const [objectID, setObjectID] = useState<string | null>(null);
   const [network, setNetwork] = useState<string | null>(null);
+  const [credits, setCredits] = useState<number>(0);
   return (
-    <AppContext.Provider value={{ objectData, setObjectData, objectID, setObjectID, network, setNetwork }}>
+    <AppContext.Provider
+      value={{ objectData, setObjectData, objectID, setObjectID, network, setNetwork, credits, setCredits }}
+    >
       {children}
     </AppContext.Provider>
   );
