@@ -3,8 +3,6 @@ import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import { Outlet } from "react-router-dom";
 
-const drawerWidth = 240;
-
 export default function MainLayout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -18,11 +16,11 @@ export default function MainLayout() {
           component="main"
           sx={{
             flexGrow: 1,
-            mt: "64px", // lascia spazio per la Topbar
+            mt: "64px",
             width: "100%",
             display: "flex",
-            justifyContent: "center", // centra orizzontalmente
-            px: 2, // padding laterale
+            justifyContent: "center",
+            px: 2,
           }}
         >
           <Box sx={{ width: "100%", maxWidth: 700 }}>

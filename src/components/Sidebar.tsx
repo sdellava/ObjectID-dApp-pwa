@@ -35,7 +35,7 @@ export default function Sidebar({ isMobile }: SidebarProps) {
         <ListItemIcon>
           <DashboardIcon />
         </ListItemIcon>
-        <ListItemText primary="Dashboard" />
+        <ListItemText primary="View Object" />
       </ListItemButton>
       <ListItemButton component={NavLink} to="/reports" onClick={() => isMobile && setOpen(false)}>
         <ListItemIcon>

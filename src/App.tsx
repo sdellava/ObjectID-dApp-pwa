@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
-import Dashboard from "./pages/Dashboard";
+import ViewObject from "./pages/ViewObject";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import SplashScreen from "./components/SplashScreen";
@@ -30,7 +30,8 @@ function App() {
     <AppProvider>
       <Routes>
         <Route path="/" element={<MainLayout />}>
-          <Route index element={<Dashboard />} />
+          <Route index element={<ViewObject />} />
+          <Route path="viewObject" element={<ViewObject />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
           <Route path="scanner" element={<Scanner />} />

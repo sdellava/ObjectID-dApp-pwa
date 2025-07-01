@@ -62,7 +62,7 @@ export default function Scanner() {
             { fps: 10, qrbox: { width: 250, height: 250 } },
             (decodedText) => {
               if (processDecodedText(decodedText)) {
-                html5QrCode.stop(); // arresto se ha scansionato
+                html5QrCode.stop();
                 isRunning = false;
               }
             },
