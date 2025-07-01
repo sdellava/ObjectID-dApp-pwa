@@ -4,6 +4,8 @@ import { useAppContext } from "../context/AppContext";
 import { searchObjectsByTypeAndOwnerAddress } from "../utils/getEvents";
 import { getObject } from "../utils/getObject";
 import { graphqlUrl } from "../constants/config";
+import { validateObject } from "../utils/utils";
+import { officialPackages } from "../constants/config";
 
 export function ExplorerURL(network: string, objectID: string): string {
   return `https://explorer.iota.org/object/${objectID}?network=${network}`;
@@ -182,6 +184,7 @@ export default function ViewObject() {
   const [fields, setFields] = useState<Record<string, any>>({});
   const [error, setError] = useState<string | null>(null);
   const [events, setEvents] = useState<any[]>([]);
+  const [validation, setValidation] = useState<any>(null);
 
   useEffect(() => {
     if (!network || !objectID || !client) {
@@ -219,6 +222,9 @@ export default function ViewObject() {
         });
 
         setFields(fields);
+
+        const valResult = await validateObject(result?.content, officialPackages, client, network);
+        setValidation(valResult);
 
         if (objectIdType && typeof objectIdType === "string") {
           const eventType = objectIdType.replace(/OIDObject$/, "OIDEvent");
@@ -293,6 +299,31 @@ export default function ViewObject() {
   if (network && objectID)
     return (
       <Box sx={{ p: 3 }}>
+        {validation && (
+          <Box sx={{ mt: 4, p: 2, border: "1px solid #ddd", backgroundColor: "#f5f5f5", borderRadius: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              ObjectID validation results
+            </Typography>
+            <ul style={{ paddingLeft: "1.2rem", margin: 0 }}>
+              {validation.check.map((c: boolean, i: number) => {
+                const msg = validation.checkMsg[i];
+                const isGeo = msg.toLowerCase().includes("geo") && c === false;
+                const icon = isGeo ? "⚠️" : c ? "✅" : "❌";
+                return (
+                  <li key={i} style={{ marginBottom: "0.5rem" }}>
+                    {icon} {msg}
+                  </li>
+                );
+              })}
+            </ul>
+            <Typography variant="body2" sx={{ mt: 2 }}>
+              All checks — except geolocation — must pass for the ObjectID to be considered authentic. Geolocation data
+              is optional, but if present and it shows the product is far from your current location, it may indicate
+              that the ID you're scanning was copied from a genuine product.
+            </Typography>
+          </Box>
+        )}
+
         <MetadataTable title="Object data:" data={fields} network={network} />
         {events.length > 0 && (
           <>
