@@ -16,7 +16,7 @@ export default function Scanner() {
   const isLargeScreen = useMediaQuery(theme.breakpoints.up("md"));
 
   const boxSize = isLargeScreen ? 600 : 300;
-  const qrboxSize = isLargeScreen ? 500 : 250;
+  const qrboxSize = isLargeScreen ? 400 : 250;
 
   const validateAndParseObjectID = (data: string): { oid: string; n: string | null } | null => {
     try {
@@ -59,7 +59,7 @@ export default function Scanner() {
         html5QrCode
           .start(
             cameraId,
-            { fps: 10, qrbox: { width: 250, height: 250 } },
+            { fps: 10, qrbox: qrboxSize },
             (decodedText) => {
               if (processDecodedText(decodedText)) {
                 html5QrCode.stop();
@@ -94,7 +94,7 @@ export default function Scanner() {
         if (devices && devices.length) {
           html5QrCodeRef.current?.start(
             devices[0].id,
-            { fps: 10, qrbox: { width: qrboxSize, height: qrboxSize } },
+            { fps: 10, qrbox: qrboxSize },
             (decodedText) => {
               if (processDecodedText(decodedText)) {
                 html5QrCodeRef.current?.stop();
