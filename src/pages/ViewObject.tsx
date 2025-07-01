@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Box, Typography, CircularProgress, Alert, Link, Table, TableBody, TableCell, TableRow } from "@mui/material";
 import { useAppContext } from "../context/AppContext";
+import { searchObjectsByTypeAndOwnerAddress } from "../utils/getEvents";
 import { getObject } from "../utils/getObject";
+import { graphqlUrl } from "../constants/config";
 
 export function ExplorerURL(network: string, objectID: string): string {
   return `https://explorer.iota.org/object/${objectID}?network=${network}`;
@@ -141,11 +143,45 @@ function MetadataTable({ title, data, network }: { title: string; data: Record<s
   );
 }
 
+function EventTable({ event, network }: { event: any; network: string }) {
+  const keys = Object.keys(event.fields)
+    .filter((k) => k !== "id")
+    .sort();
+
+  return (
+    <Box sx={{ mt: 3 }}>
+      <Table size="small">
+        <TableBody>
+          <TableRow>
+            <TableCell sx={{ fontWeight: "bold", width: "40%" }}>{formatLabel("Event ID:")}</TableCell>
+            <Link
+              href={ExplorerURL(network, event.id)}
+              target="_blank"
+              rel="noopener"
+              sx={{ fontWeight: "normal", color: "purple" }}
+            >
+              <TableCell>{renderValue("id", event.id, network)}</TableCell>
+            </Link>
+          </TableRow>
+
+          {keys.map((key) => (
+            <TableRow key={key}>
+              <TableCell sx={{ fontWeight: "bold", width: "40%" }}>{formatLabel(key)}</TableCell>
+              <TableCell>{renderValue(key, event.fields[key], network)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Box>
+  );
+}
+
 export default function ViewObject() {
   const { objectID, network, client } = useAppContext();
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const [fields, setFields] = useState<Record<string, any>>({});
   const [error, setError] = useState<string | null>(null);
+  const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
     if (!network || !objectID || !client) {
@@ -159,6 +195,8 @@ export default function ViewObject() {
         const result = (await getObject(client, objectID)) as any;
         const rawFields = result?.content?.fields || {};
         const fields = { ...rawFields };
+
+        const objectIdType = result?.type;
 
         // Unisci immutable_metadata e mutable_metadata dentro fields
         ["immutable_metadata", "mutable_metadata"].forEach((metaKey) => {
@@ -181,6 +219,54 @@ export default function ViewObject() {
         });
 
         setFields(fields);
+
+        if (objectIdType && typeof objectIdType === "string") {
+          const eventType = objectIdType.replace(/OIDObject$/, "OIDEvent");
+
+          console.log("eventType", eventType);
+
+          const relatedEvents = await searchObjectsByTypeAndOwnerAddress(eventType, objectID, graphqlUrl(network));
+
+          console.log("relatedEvents", relatedEvents);
+
+          const parsedEvents = relatedEvents.map((edge: any) => {
+            const rawFields = edge.node.asMoveObject?.contents?.data?.Struct || [];
+
+            const eventFields: Record<string, any> = {};
+            for (const field of rawFields) {
+              const key = field.name;
+              const value =
+                field.value.String ?? field.value.Number ?? field.value.Address ?? field.value.UID ?? field.value;
+              eventFields[key] = value;
+            }
+
+            ["immutable_metadata", "mutable_metadata"].forEach((metaKey) => {
+              try {
+                const metaRaw = eventFields[metaKey];
+                if (metaRaw && typeof metaRaw === "string") {
+                  const meta = JSON.parse(metaRaw);
+                  if (typeof meta === "object" && meta !== null) {
+                    for (const [k, v] of Object.entries(meta)) {
+                      if (!(k in eventFields)) {
+                        eventFields[k] = v;
+                      }
+                    }
+                  }
+                }
+              } catch (e) {
+                console.warn(`Error parsing ${metaKey} in event:`, e);
+              }
+              delete eventFields[metaKey];
+            });
+
+            return {
+              id: edge.node.address,
+              fields: eventFields,
+            };
+          });
+
+          setEvents(parsedEvents);
+        }
 
         setStatus("ok");
       } catch (e) {
@@ -214,6 +300,16 @@ export default function ViewObject() {
     return (
       <Box sx={{ p: 3 }}>
         <MetadataTable title="Object data:" data={fields} network={network} />
+        {events.length > 0 && (
+          <>
+            <Typography variant="subtitle1" gutterBottom sx={{ mt: 4 }}>
+              <strong>Product history (events): </strong>
+            </Typography>
+            {events.map((event, idx) => (
+              <EventTable key={idx} event={event} network={network} />
+            ))}
+          </>
+        )}
       </Box>
     );
   else return <></>;
