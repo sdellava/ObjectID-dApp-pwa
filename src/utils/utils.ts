@@ -1,4 +1,4 @@
-import { getFullnodeUrl, IotaClient, IotaObjectData } from "@iota/iota-sdk/client";
+import { getFullnodeUrl, IotaClient } from "@iota/iota-sdk/client";
 import { validateGeolocation } from "./ValidateGeolocation";
 
 import {
@@ -56,8 +56,8 @@ export async function getObjectInfo(
     const objectPackageName = `${objectPackageId}::oid_object`;
     const eventType = `${objectPackageId}::oid_object::OIDEvent`;
 
-    const owner = object.content.fields.owner_did?.trim();
-    const agent = object.content.fields.agent_did?.trim();
+    //const owner = object.content.fields.owner_did?.trim();
+    //const agent = object.content.fields.agent_did?.trim();
 
     return {
       objectData: {
@@ -247,8 +247,13 @@ export async function validateDid(network: string, didObject: any) {
   if (debug) console.log("---validate---");
   if (debug) console.log("didObject", didObject);
 
+  console.log("network: ", network);
+  console.log("client", await client.getChainIdentifier());
+
   try {
     const identityClientReadOnly = await IdentityClientReadOnly.create(client);
+
+    console.log("here");
 
     const iotaDid = IotaDID.fromAliasId(didObject, network);
 

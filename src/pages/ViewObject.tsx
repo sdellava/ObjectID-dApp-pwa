@@ -275,7 +275,7 @@ export default function ViewObject() {
         setStatus("error");
       }
     })();
-  }, [network, objectID]);
+  }, [network, objectID, client]);
 
   if (status === "loading") {
     return (

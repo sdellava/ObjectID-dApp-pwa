@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Box, Alert } from "@mui/material";
 import { Html5Qrcode } from "html5-qrcode";
 import { useAppContext } from "../context/AppContext";
@@ -34,23 +34,26 @@ export default function Scanner() {
     }
   };
 
-  const processDecodedText = (decodedText: string) => {
-    const valid = validateAndParseObjectID(decodedText);
-    if (valid) {
-      const { oid, n } = valid;
-      setNetwork(n === "testnet" ? "testnet" : "mainnet");
-      setObjectID(oid);
+  const processDecodedText = useCallback(
+    (decodedText: string) => {
+      const valid = validateAndParseObjectID(decodedText);
+      if (valid) {
+        const { oid, n } = valid;
+        setNetwork(n === "testnet" ? "testnet" : "mainnet");
+        setObjectID(oid);
 
-      const localClient = new IotaClient({ url: getFullnodeUrl(n === "testnet" ? "testnet" : "mainnet") });
-      setClient(localClient);
+        const localClient = new IotaClient({ url: getFullnodeUrl(n === "testnet" ? "testnet" : "mainnet") });
+        setClient(localClient);
 
-      navigate("/view-object");
-      return true;
-    } else {
-      setError("Invalid ObjectID QR code.");
-      return false;
-    }
-  };
+        navigate("/view-object");
+        return true;
+      } else {
+        setError("Invalid ObjectID QR code.");
+        return false;
+      }
+    },
+    [setNetwork, setObjectID, setClient, navigate]
+  );
 
   useEffect(() => {
     const html5QrCode = new Html5Qrcode(qrRegionId);
@@ -89,7 +92,7 @@ export default function Scanner() {
         });
       }
     };
-  }, []);
+  }, [processDecodedText, qrboxSize]);
 
   return (
     <Box sx={{ p: 2, display: "flex", flexDirection: "column", alignItems: "center" }}>
